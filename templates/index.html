@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rate Guard - Provider Management</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Rate Guard - Provider Management</h1>
+        
+        <div class="card">
+            <h2>Register New Provider</h2>
+            <form id="register_form">
+                <div class="form-group">
+                    <label for="provider_name">Provider Name</label>
+                    <input type="text" id="provider_name" name="provider_name" required placeholder="Enter provider name">
+                </div>
+                <div class="form-group">
+                    <label for="rate_limit">Rate Limit</label>
+                    <input type="number" id="rate_limit" name="rate_limit" required placeholder="Enter rate limit">
+                </div>
+                <div class="form-group">
+                    <label for="window_duration">Window Duration (seconds)</label>
+                    <input type="number" id="window_duration" name="window_duration" required placeholder="Enter window duration">
+                </div>
+                <button type="submit">Register Provider</button>
+            </form>
+            <div id="response_message"></div>
+        </div>
+        
+        <h2>Registered Providers</h2>
+        <div id="providers_list">
+            <!-- Providers list will be populated here -->
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // Handle form submission to register providers
+            $('#register_form').on('submit', function(event) {
+                event.preventDefault();
+                
+                var formData = {
+                    provider_name: $('#provider_name').val(),
+                    rate_limit: $('#rate_limit').val(),
+                    window_duration: $('#window_duration').val(),
+                };
+
+                $.ajax({
+                    url: '/register_provider',
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        $('#response_message').html('<p>' + response.message + '</p>');
+                        loadProviders();
+                        $('#register_form')[0].reset();
+                    },
+                    error: function(xhr, status, error) {
+                        $('#response_message').html('<p>Error: ' + error + '</p>');
+                    }
+                });
+            });
+
+            // Load provider list from the backend
+            function loadProviders() {
+                $.ajax({
+                    url: '/get_providers',
+                    type: 'GET',
+                    success: function(response) {
+                        var providersHtml = '';
+                        response.providers.forEach(function(provider) {
+                            providersHtml += `
+                                <div class="provider-card">
+                                    <h3>${provider.name}</h3>
+                                    <p><strong>Rate Limit:</strong> ${provider.rate_limit}</p>
+                                    <p><strong>Window Duration:</strong> ${provider.window_duration} seconds</p>
+                                    <button class="send_request_button" data-provider="${provider.name}">Send Request</button>
+                                </div>
+                            `;
+                        });
+                        $('#providers_list').html(providersHtml);
+
+                        // Handle send request button click
+                        $('.send_request_button').on('click', function() {
+                            var providerName = $(this).data('provider');
+                            $.ajax({
+                                url: '/send_request/' + providerName,
+                                type: 'POST',
+                                success: function(response) {
+                                    alert(response.message);
+                                },
+                                error: function(xhr, status, error) {
+                                    alert('Error: ' + error);
+                                }
+                            });
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Error loading providers list: ' + error);
+                    }
+                });
+            }
+
+            loadProviders();
+        });
+    </script>
+</body>
+</html>

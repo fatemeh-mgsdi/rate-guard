@@ -1,0 +1,239 @@
+openapi: 3.0.0
+info:
+  title: Rate Guard API
+  description: API documentation for Rate Guard - A rate limiting management system
+  version: 1.0.0
+  contact:
+    name: Rate Guard Team
+    email: support@rateguard.com
+
+servers:
+  - url: http://localhost:5000
+    description: Local development server
+  - url: https://api.rateguard.com
+    description: Production server
+
+paths:
+  /:
+    get:
+      summary: Get the main page
+      description: Renders the main HTML page of the Rate Guard application
+      responses:
+        '200':
+          description: HTML page rendered successfully
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /register_provider:
+    post:
+      summary: Register a new provider
+      description: Register a new API provider with custom rate limits and window duration
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - provider_name
+                - rate_limit
+                - window_duration
+              properties:
+                provider_name:
+                  type: string
+                  description: Name of the provider
+                  example: "API Provider 1"
+                rate_limit:
+                  type: integer
+                  description: Maximum number of requests allowed in the time window
+                  example: 100
+                window_duration:
+                  type: integer
+                  description: Time window duration in seconds
+                  example: 60
+      responses:
+        '200':
+          description: Provider registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  message:
+                    type: string
+                    example: "Provider API Provider 1 registered successfully!"
+        '400':
+          description: Invalid input parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "error"
+                  message:
+                    type: string
+                    example: "Invalid input parameters"
+
+  /get_providers:
+    get:
+      summary: Get all registered providers
+      description: Retrieve a list of all registered providers with their configurations
+      responses:
+        '200':
+          description: List of providers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  providers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          example: "API Provider 1"
+                        rate_limit:
+                          type: integer
+                          example: 100
+                        window_duration:
+                          type: integer
+                          example: 60
+
+  /send_request/{provider_name}:
+    post:
+      summary: Send a request to a provider
+      description: Send a test request to a specific provider to test rate limiting
+      parameters:
+        - name: provider_name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Name of the provider to send the request to
+          example: "API Provider 1"
+      responses:
+        '200':
+          description: Request sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  message:
+                    type: string
+                    example: "Request for API Provider 1 added successfully!"
+        '404':
+          description: Provider not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "error"
+                  message:
+                    type: string
+                    example: "Provider API Provider 1 not found!"
+
+  /provider_status/{provider_name}:
+    get:
+      summary: Get provider status
+      description: Get the current status and rate limit information for a specific provider
+      parameters:
+        - name: provider_name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Name of the provider to get status for
+          example: "API Provider 1"
+      responses:
+        '200':
+          description: Provider status retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: "API Provider 1"
+                  rate_limit:
+                    type: integer
+                    example: 100
+                  window_duration:
+                    type: integer
+                    example: 60
+                  current_requests:
+                    type: integer
+                    example: 45
+                  is_rate_limited:
+                    type: boolean
+                    example: false
+        '404':
+          description: Provider not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "error"
+                  message:
+                    type: string
+                    example: "Provider API Provider 1 not found!"
+
+components:
+  schemas:
+    Provider:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "API Provider 1"
+        rate_limit:
+          type: integer
+          example: 100
+        window_duration:
+          type: integer
+          example: 60
+        current_requests:
+          type: integer
+          example: 45
+        is_rate_limited:
+          type: boolean
+          example: false
+
+    Error:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "error"
+        message:
+          type: string
+          example: "Provider not found"
+
+    Success:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "success"
+        message:
+          type: string
+          example: "Operation completed successfully" 
